@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
@@ -45,7 +44,8 @@ namespace Netstat_Realtime
             {
                 return false;
             }
-            else if (_runningTask.Status == TaskStatus.WaitingForActivation || _runningTask.Status == TaskStatus.Running) {
+            else if (_runningTask.Status == TaskStatus.WaitingForActivation || _runningTask.Status == TaskStatus.Running)
+            {
                 return true;
             }
             else
@@ -72,9 +72,14 @@ namespace Netstat_Realtime
             {
                 using (_logWriter = new StreamWriter(_logFile, true, Encoding.UTF8))
                 {
+                    // Write CSV Header
+                    _logWriter.AutoFlush = true;
                     _logWriter.WriteLine($"Time,EventType,LocalEndpoint,RemoteEndpoint,OldState,NewState");
+
+                    // Main Loop
                     while (!_cancellationTokenSource.IsCancellationRequested)
                     {
+                        // Sleep for the delay interval
                         await Task.Delay(_interval);
 
                         // Get connection states
@@ -95,11 +100,12 @@ namespace Netstat_Realtime
                         var newListeners = currentListeners.Where(l => !_prevListeners.Contains(l)).ToList();
                         var oldListeners = _prevListeners.Where(l => !currentListeners.Contains(l)).ToList();
 
-                        newConnections.ForEach(async c => await LogConnectionAsync(EventType.NewSocket, c.Key.local, c.Key.remote, null, c.Value));
-                        oldConnections.ForEach(async c => await LogConnectionAsync(EventType.DisconnectedSocket, c.Key.local, c.Key.remote, c.Value, null));
-                        changedConnections.ForEach(async c => await LogConnectionAsync(EventType.ChangedSocket, c.Key.local, c.Key.remote, _prevConnections[c.Key], c.Value));
-                        newListeners.ForEach(async c => await LogConnectionAsync(EventType.NewListener, c, null, null, null));
-                        oldListeners.ForEach(async c => await LogConnectionAsync(EventType.StoppedListener, c, null, null, null));
+                        // For each event, log it to the console (if applicable) and the log file
+                        newConnections.ForEach(c => LogConnection(EventType.NewSocket, c.Key.local, c.Key.remote, null, c.Value));
+                        oldConnections.ForEach(c => LogConnection(EventType.DisconnectedSocket, c.Key.local, c.Key.remote, c.Value, null));
+                        changedConnections.ForEach(c => LogConnection(EventType.ChangedSocket, c.Key.local, c.Key.remote, _prevConnections[c.Key], c.Value));
+                        newListeners.ForEach(c => LogConnection(EventType.NewListener, c, null, null, null));
+                        oldListeners.ForEach(c => LogConnection(EventType.StoppedListener, c, null, null, null));
 
                         // Replace fields to compare next iteration
                         _prevConnections = currentConnections;
@@ -137,14 +143,14 @@ namespace Netstat_Realtime
             return listeners.Select(l => l.ToString()).ToHashSet();
         }
 
-        private async Task LogConnectionAsync(EventType eventType, string localEndpoint, string remoteEndpoint, TcpState? oldState, TcpState? newState)
+        private void LogConnection(EventType eventType, string localEndpoint, string remoteEndpoint, TcpState? oldState, TcpState? newState)
         {
             var currentTime = DateTime.Now.ToString("s");
             if (_logToConsole)
             {
                 Console.WriteLine($"{currentTime}: {eventType} - [Local: {localEndpoint}] [Remote: {remoteEndpoint}] [Old State: {oldState}] [New State: {newState}]");
             }
-            await _logWriter.WriteAsync($"{currentTime},.{eventType},\"{localEndpoint}\",\"{remoteEndpoint}\",{oldState},{newState}");
+            _logWriter.WriteLine($"{currentTime},{eventType},\"{localEndpoint}\",\"{remoteEndpoint}\",{oldState},{newState}");
         }
     }
 }

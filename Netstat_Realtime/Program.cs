@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Netstat_Realtime
 {
@@ -25,7 +20,7 @@ namespace Netstat_Realtime
             if (!parseLogToConsole) Console.WriteLine($"Failed to parse interval: '{args[1]}'");
 
             // Set CSV log file name
-            var dateTime = DateTime.Now.ToString("s").Replace(":","-");
+            var dateTime = DateTime.Now.ToString("s").Replace(":", "-");
             var logFile = $".\\netstat_realtime_{dateTime}.csv";
             Console.WriteLine($"-----------------------------------------------------------");
             Console.WriteLine($"Logging to file: {logFile}");
