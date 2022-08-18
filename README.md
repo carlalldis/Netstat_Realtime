@@ -1,6 +1,7 @@
 # Netstat_Realtime
 
 Polls TCP connections and listeners on an interval and reports new,removed,and changed observations.
+'Events' are logged to console, if set to true, and a unique log file.
  
 Usage: ```Netstat_Realtime.exe <poll_interval_milliseconds> <log_to_console (true/false)```
 - Example 1 - Poll 10 times per second with console logging:
